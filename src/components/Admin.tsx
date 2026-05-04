@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 
 type Contact = {
-    _id: string;
-    issueType: string,
-    location: string,
-    description: string;
-    status?: string;
+  _id: string;
+  issueType: string;
+  location: string;
+  description: string;
+  status?: string;
 };
 
 interface AdminProps {
@@ -13,11 +13,11 @@ interface AdminProps {
 }
 
 const Admin: React.FC<AdminProps> = ({ onBack }) => {
-    const [data, setData] = useState<Contact[]>([]);
-    const [password, setPassword] = useState("");
-    const [authenticated, setAuthenticated] = useState(false);
+  const [data, setData] = useState<Contact[]>([]);
+  const [password, setPassword] = useState("");
+  const [authenticated, setAuthenticated] = useState(false);
 
-    useEffect(() => {
+  useEffect(() => {
     fetch("http://localhost:5000/issues")
       .then((res) => res.json())
       .then((data) => setData(data))
@@ -29,6 +29,31 @@ const Admin: React.FC<AdminProps> = ({ onBack }) => {
       setAuthenticated(true);
     } else {
       alert("Wrong password");
+    }
+  };
+
+  const deleteIssue = async (id: string) => {
+    try {
+      await fetch(`http://localhost:5000/issues/${id}`, {
+        method: "DELETE",
+      });
+      setData(data.filter((item) => item._id !== id));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const updateIssue = async (id: string) => {
+    try {
+      const res = await fetch(`http://localhost:5000/issues/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const updated = await res.json();
+      setData(data.map((item) => (item._id === id ? updated : item)));
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -52,33 +77,8 @@ const Admin: React.FC<AdminProps> = ({ onBack }) => {
     );
   }
 
-  const deleteIssue = async (id: string) => {
-    try {
-      await fetch(`http://localhost:5000/issues/${id}`, {
-        method: "DELETE",
-      });
-      setData(data.filter((item) => item._id !== id));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const updateIssue = async (id: string) => {
-    try {
-      const res = await fetch(`http://localhost:5000/issues/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}), 
-      });
-      const updated = await res.json();
-      setData(data.map((item) => item._id === id ? updated : item));
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   return (
-     <div className="container mt-5">
+    <div className="container mt-5">
       <div className="d-flex justify-content-between align-items-center">
         <h2>Admin Dashboard</h2>
         <button className="btn btn-outline-secondary" onClick={onBack}>
@@ -96,18 +96,26 @@ const Admin: React.FC<AdminProps> = ({ onBack }) => {
             <th>Action</th>
           </tr>
         </thead>
+
         <tbody>
-          {data.map((item, index) => (
-            <tr key={index}>
+          {data.map((item) => (
+            <tr key={item._id}>
               <td>{item.issueType}</td>
               <td>{item.location}</td>
               <td>{item.description}</td>
               <td>{item.status || "pending"}</td>
               <td>
-                <button className="btn btn-success btn-sm me-2" onClick={() => updateIssue(item._id)}>
+                <button
+                  className="btn btn-success btn-sm me-2"
+                  onClick={() => updateIssue(item._id)}
+                >
                   Resolved
                 </button>
-                <button className="btn btn-danger btn-sm" onClick={() => deleteIssue(item._id)}>
+
+                <button
+                  className="btn btn-danger btn-sm"
+                  onClick={() => deleteIssue(item._id)}
+                >
                   Delete
                 </button>
               </td>
